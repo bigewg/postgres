@@ -1,0 +1,73 @@
+https://dba.stackexchange.com/questions/112637/can-i-do-vacuum-full-to-pg-largeobject-table
+Can I do VACUUM FULL to pg_largeobject table?
+
+
+I have two tables (table1, table2) in a Postgres 9.1 database. Both having oid type. Each table 1 million records. And pg_largeobject table size is around 40GB. I have removed 0.9 million records from each table, and executed the below command.
+
+vacuum full analyze table1;
+vacuum full analyze table2;
+
+Still no change in pg_largeobject table size (auto vacuum is enabled)
+
+Do I need to execute above command to pg_largeobject table too? Will it impact anything?
+
+
+
++50
+
+You can run that, no problem:
+
+VACUUM FULL ANALYZE pg_largeobject;
+
+Might even remove some dead rows. Details:
+
+    VACUUM returning disk space to operating system
+
+But it's probably not going to solve your actual problem.
+
+When using the large object facility of Postgres, large objects ("blob": binary large object) themselves are broken up in chuncks of binary data stored in the system table pg_largeobject. The PK consists of two columns (loid, pageno), loid is the oid that is used to refer to the blob in user table(s). The same blob can be referenced by OID many times.
+
+Deleting rows in user tables does not remove the blob. For one, the same blob might be referenced more than one times. It is your responsibility to keep track and actually delete "unlinked" blobs yourself. One way would be to use lo_unlink():
+
+SELECT lo_unlink(173454);  -- deletes large object with OID 173454
+
+Since you already deleted rows with the oid reference, you need to be a bit more creative to identify unlinked blobs. Assuming you do not reference blobs from any other places, you can use this query to fix:
+
+SELECT lo_unlink(l.loid)
+FROM   pg_largeobject l
+GROUP  BY loid
+HAVING (NOT EXISTS (SELECT 1 FROM table1 t WHERE t.oid = l.loid))
+AND    (NOT EXISTS (SELECT 1 FROM table2 t WHERE t.oid = l.loid));
+
+You need to be superuser to access pg_largeobject directly. Assuming the column name in table1 and table2 is oid. Simpler query based on pg_largeobject_metadata in Postgres 9.3 or later (like @Daniel commented):
+
+SELECT lo_unlink(l.oid)
+FROM   pg_largeobject_metadata l
+WHERE (NOT EXISTS (SELECT 1 FROM table1 WHERE t.oid = l.oid))
+AND   (NOT EXISTS (SELECT 1 FROM table2 WHERE t.oid = l.oid));
+
+pg_largeobject_metadata is publicly readable. But I don't see the OID of the blob in the system table in versions before pg 9.3 (incl. pg 9.1) - at least not in the manual, I don't have an old version to test right now. So you probably must use my first query.
+
+Compare before and after:
+
+SELECT count(*) FROM pg_largeobject;
+SELECT pg_size_pretty(pg_table_size('pg_largeobject'));
+
+You might run VACUUM FULL now, and test again:
+
+VACUUM FULL ANALYZE pg_largeobject;
+
+You'll be interested in the additional module lo, that's available for Postgres 9.1. The manual has an accurate description for your problem:
+
+    ... a table entry can reference a large object by OID, but there can be multiple table entries referencing the same large object OID, so the system doesn't delete the large object just because you change or remove one such entry.
+
+Bold emphasis mine. The module offers a solution, too:
+
+    The lo module allows fixing this by attaching a trigger to tables that contain LO reference columns. The trigger essentially just does a lo_unlink whenever you delete or modify a value referencing a large object.
+
+For use cases where each blob is referenced exactly once in your whole DB.
+
+And obviously also (like @Daniel mentioned) vacuumlo:
+
+    vacuumlo is a simple utility prog
+    
