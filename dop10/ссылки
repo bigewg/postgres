@@ -1,0 +1,5 @@
+Locks in PostgreSQL: 3. Other locks
+https://postgrespro.com/blog/pgsql/5968020
+
+13.3. Explicit Locking
+https://www.postgresql.org/docs/15/explicit-locking.html
