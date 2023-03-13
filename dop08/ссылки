@@ -1,3 +1,6 @@
+A Case Study of Tuning Autovacuum in Amazon RDS for PostgreSQL
+https://aws.amazon.com/ru/blogs/database/a-case-study-of-tuning-autovacuum-in-amazon-rds-for-postgresql/
+
 https://dba.stackexchange.com/questions/112637/can-i-do-vacuum-full-to-pg-largeobject-table
 Can I do VACUUM FULL to pg_largeobject table?
 
