@@ -1,5 +1,6 @@
-Why Linux HugePages are Super Important for Database Servers: A Case with PostgreSQL - Percona Database Performance Blog
-https://www.percona.com/blog/why-linux-hugepages-are-super-important-for-database-servers-a-case-with-postgresql/
+1. Создаем виртуалку  и устанавливаем постгрес 14.
+```
+-- поставим 15 ПГ
+sudo apt update && sudo apt upgrade -y -q && sudo sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list' && wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add - && sudo apt-get update && sudo apt -y install postgresql-15
 
-Cybertec PostgreSQL Configurator
-https://pgconfigurator.cybertec.at/
+```
