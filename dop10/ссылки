@@ -4,6 +4,9 @@ https://postgrespro.com/blog/pgsql/5968020
 13.3. Explicit Locking
 https://www.postgresql.org/docs/15/explicit-locking.html
 
+
+свои:
+
 Блокировки в PostgreSQL: 2. Блокировки строк
 https://habr.com/ru/company/postgrespro/blog/463819/
 
