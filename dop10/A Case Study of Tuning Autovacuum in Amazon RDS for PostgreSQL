@@ -1,0 +1,133 @@
+https://aws.amazon.com/ru/blogs/database/a-case-study-of-tuning-autovacuum-in-amazon-rds-for-postgresql/
+
+
+A Case Study of Tuning Autovacuum in Amazon RDS for PostgreSQL
+by Lei Zeng | on 12 FEB 2018 | in Amazon RDS, Database, RDS for PostgreSQL | Permalink | Comments |  Share
+
+In a PostgreSQL database, the autovacuum process performs multiple critical maintenance operations. In addition to freezing the transaction ID to prevent it from wraparound, autovacuum also removes dead tuples to recover space usage. For databases with a high volume of write operations, it is recommended that you tune autovacuum to run frequently. Doing this helps you avoid the accumulation of dead tuples that bloat tables and indexes.
+
+In this post, I use a case study to demonstrate how to monitor and tune the autovacuum process in such a circumstance.
+
+What is a dead tuple?
+PostgreSQL uses multiversion concurrency control (MVCC) to support concurrent read and write operations. When a row is updated, a new version of the row, known as a tuple, is created and inserted into the table. The old version of the row, referred to as a dead tuple, is not physically removed but is marked as invisible for future transactions.
+
+Because every row can have multiple different versions, PostgreSQL stores visibility information inside tuples to help determine whether it is visible to a transaction or query based on its isolation level. Dead tuples might still be visible to transactions. If a dead tuple is not visible to any transaction, the vacuum process can remove it by marking its space as available for future reuse. You can find a good explanation of vacuuming for recovering space in the PostgreSQL documentation.
+
+The importance of removing dead tuples is twofold. Dead tuples not only decrease space utilization, but they can also lead to database performance issues. When a table has a large number of dead tuples, its size grows much more than it actually needs—usually called bloat. A sequential scan on a bloated table has more pages to go though, costing additional I/O and taking longer. The index can also be bloated because it doesn’t store the visibility information of a row and might point to dead tuples. A bloated index results in more unnecessary I/O fetches, thus slowing down index lookup and scanning.
+
+When autovacuum doesn’t remove dead tuples
+For databases that have high volumes of write operations, the growth rate of dead tuples can be high. In addition, the default configuration of Amazon Relational Database Service (Amazon RDS) for PostgreSQL might not allow autovacuum to clean them up quickly enough.
+
+The following Amazon CloudWatch graph shows an example of the problems that I encountered. It can be seen as a summary of my tuning experience.
+
+Recently I migrated a set of OLTP (online transaction processing) databases from Oracle to Amazon RDS for PostgreSQL version 9.6.3. Based on the normal range of IOPS (input/output operations per second) on Oracle databases, I configured Amazon RDS for PostgreSQL instances with 30,000 Provisioned IOPS as capacity planning for double load at Q4 peak time. During the first few weeks after migration, several databases experienced up to 25,000 Read IOPS spikes in a situation in which there was no increase in load.
+
+When the IOPS spikes happened, I examined the database sessions, searching those that contributed to high I/O usage. I noticed two problems with the autovacuum sessions.
+
+Problem 1: The default three autovacuum sessions had been running for a long time while vacuuming tables.
+
+-- SQL to check autovacuum sessions
+
+SELECT datname, usename, pid, current_timestamp - xact_start AS xact_runtime, state, query
+FROM pg_stat_activity 
+WHERE query LIKE '%autovacuum%' AND query NOT LIKE '%pg_stat_activity%'
+ORDER BY xact_start;
+
+datname | usename  |  pid  |    xact_runtime        | state  |                    query        
+--------+----------+-------+------------------------+--------+-----------------------------------------------------
+oltp101 | rdsadmin | 50723 | 2 days 16:03:48.447991 | active | autovacuum: VACUUM sh.table1 (to prevent wraparound)
+oltp101 | rdsadmin |  8112 | 15:35:30.003172        | active | autovacuum: VACUUM sh.table2
+oltp101 | rdsadmin | 64109 | 14:34:23.605948        | active | autovacuum: VACUUM ANALYZE sh.table3
+
+In the default configuration of Amazon RDS for PostgreSQL version 9.6.3, autovacuum_vacuum_scale_factor is set to 0.1. This means that a table is eligible to be vacuumed when more than 10 percent of its tuples are dead tuples. Before the IOPS spike started, none of my tables met this threshold, and autovacuum didn’t kick in. However, many of my tables were big, with hundreds of millions of row counts. When those tables reached this 10 percent threshold, their dead tuples had already grown into millions. The autovacuum session spent a lot of I/O and time working on them.
+
+The default configuration also sets autovacuum_max_workers to 3. This means that at a given time, three concurrent autovacuum sessions can run, or three tables can be vacuumed concurrently. When those three autovacuum sessions were all occupied, other tables had to wait for their turn to be vacuumed while their dead tuples kept growing. This turned into an unhealthy cycle.
+
+Problem 2: On the table that had the autovacuum session running for the longest time, I also found another session querying it and getting stuck in the idle in transaction status.
+
+-- SQL to check sessions querying a specific table
+
+SELECT datname, usename, pid, current_timestamp - xact_start AS xact_runtime, state, query
+FROM pg_stat_activity 
+WHERE query LIKE '%table1%'
+ORDER BY xact_start;
+
+datname | usename |  pid  |      xact_runtime      |        state        |                 query             
+--------+---------+-------+------------------------+---------------------+--------------------------------------
+oltp101 | user1   | 36637 | 2 days 22:25:22.838865 | idle in transaction | select * from table1 where column1=$1 
+
+A session is marked as idle in transaction when it starts a transaction but doesn’t end it with either COMMIT or ROLLBACK. In PostgreSQL, every SQL statement is executed within a transaction, and a transaction can be started without asking. One of my applications had autocommit disabled and ran a SELECT statement—and a transaction was started implicitly. However, the application was not aware of it and didn’t issue an explicit COMMIT or ROLLBACK thereafter, leaving an incomplete transaction on the database side. When autovacuum tried to remove dead tuples on the table involved, it noticed that they were still visible to open transactions and could not remove them. Autovacuum was essentially being blocked.
+
+With these two problems, the autovacuum sessions couldn’t keep up with demands. As shown in the table stats, many tables were bloated, and their dead tuples had grown tremendously. This became the root cause of IOPS spikes.
+
+To alleviate the bloat, I tried vacuum freeze and pg_repack. These manual steps are helpful when autovacuum doesn’t work as expected.
+
+-- SQL to check table statistics about the number of dead tuples
+
+SELECT relname, n_live_tup, n_dead_tup, trunc(100*n_dead_tup/(n_live_tup+1))::float "ratio%",
+to_char(last_autovacuum, 'YYYY-MM-DD HH24:MI:SS') as autovacuum_date, 
+to_char(last_autoanalyze, 'YYYY-MM-DD HH24:MI:SS') as autoanalyze_date
+FROM pg_stat_all_tables 
+ORDER BY last_autovacuum;
+
+relname | n_live_tup | n_dead_tup | ratio% |   autovacuum_date   |  autoanalyze_date
+--------+------------+------------+--------+--------+---------------------+------------
+table1  |  450398643 |  459406616 |    102 | 2017-08-30 09:10:08 | 2017-08-30 09:11:33
+table2  |  332046816 | 1919230596 |    578 | 2017-08-30 14:25:29 | 2017-08-30 07:51:07
+table3  |  729910818 | 4642232802 |    636 | 2017-08-30 19:29:25 | 2017-08-30 11:56:36
+
+Tuning autovacuum for removing dead tuples
+The Amazon RDS documentation provides a good starting point for the tuning process. Many parameters are provided that you can use in a flexible way. Some can be changed dynamically without bouncing the Amazon RDS instance. Some can be set either at the database level or at the table level. My tuning efforts were focused on parameters, which helped me solve those two problems identified before.
+
+Problem 1 pointed out that the default setting of autovacuum_vacuum_scale_factor was too high for my tables because it delayed the start of autovacuum. The default value of this parameter is 0.2 for Amazon RDS for PostgreSQL version 9.5 and earlier. This parameter is combined with autovacuum_vacuum_threshold, set to 50 by default, to determine whether a table is eligible to be vacuumed.
+
+The following formula calculates the autovacuum threshold for a table:
+
+autovacuum_vacuum_threshold + autovacuum_vacuum_scale_factor * number of tuples
+
+To trigger autovacuum to run more frequently, I recommend using a small value for autovacuum_vacuum_scale_factor, such as 0.02 or 0.01. The smaller the value is for this parameter, the less the number of dead tuples that autovacuum will work on each time. For large tables, this means autovacuum can take less I/O and less time to finish. For small tables, there may be a concern that autovacuum runs unnecessarily frequently and incurs overhead. If your tables have various sizes or different write patterns, I recommend that you set this parameter with different values at the table level, instead of one value at the database level.
+
+Problem 1 also indicated that running three default autovacuum sessions concurrently was not quick enough to traverse all the tables that met the autovacuum threshold. So I want to increase autovacuum_max_workers. However, each autovacuum session consumes a certain amount of memory, CPU, and IOPS. On the one hand, the autovacuum sessions are empowered to get the job done in an optimal way if they have enough system resource allocation. On the other hand, you want to put a limit on their system resource consumption so that their performance impact can be predictable.
+
+To strike a balance, I recommend checking the following two sets of parameters and making adjustments accordingly if you plan to increase autovacuum_max_workers.
+
+    maintenance_work_mem and autovacuum_work_mem: Either of these two parameters sets the maximum size of memory that each autovacuum session can use. When autovacuum_work_mem is not set, it defaults to the same value as maintenance_work_mem. The Amazon RDS documentation explains maintenance_work_mem in detail. By default, both parameters are defined based on the Amazon RDS instance type by using the same formula:GREATEST({DBInstanceClassMemory/63963136*1024},65536)In my case, this is good enough.
+    autovacuum_vacuum_cost_limit and autovacuum_vacuum_cost_delay: PostgreSQL uses a cost-based algorithm to calculate the I/O impact of autovacuum sessions. Different I/O operations are assigned different costs.When an autovacuum session starts running, the I/O operations it does are tracked, and the cost is summed up. When the total cost reaches a threshold, which is equal to autovacuum_vacuum_cost_limit/autovacuum_max_workers, the autovacuum session takes a break for a period of time that is specified by autovacuum_vacuum_cost_delay. The purpose of doing this is to throttle the autovacuum sessions to reduce their I/O usage over time.The default value of autovacuum_vacuum_cost_limit is 200, which I consider conservative because it is evenly divided among all autovacuum sessions. I recommend increasing it proportionally if autovacuum_max_workers is increased. Another option is to reduce autovacuum_vacuum_cost_delay from the default 20 milliseconds to 10, or even a smaller value, to reduce the break time and increase the run frequency of autovacuum.
+
+Let’s go back to problem 2. A long-running transaction or query threw a wrench into the autovacuum process because it held up dead tuples and blocked autovacuum from removing them. I recommend setting statement_timeout to put a limit on the maximum allowed duration of a SQL statement.
+
+Starting with PostgreSQL 9.6, idle_in_transaction_session_timeout can also be used to terminate a session with an idle in transaction status after a certain period of time. When setting these timeout parameters, I considered the time it takes for the longest transactions and queries to run on the database, trying to balance their priorities.
+
+Another situation where autovacuum can get blocked and bloat can happen is on databases with Amazon RDS Read Replicas. For more information, refer to the Handling Query Conflicts section in the PostgreSQL documentation.
+
+Monitoring autovacuum and measuring tuning results
+After you make parameter changes, I recommend using CloudWatch metrics to monitor the overall system resource usage and ensure that they are kept within an acceptable range when autovacuum sessions run concurrently. As you can see from the previous CloudWatch graph, the Read IOPS was brought up to 10,000—one-third of my Amazon RDS instance’s IOPS capacity—after I increased autovacuum_max_workers to 8 and autovacuum_vacuum_cost_limit to 4800.
+
+To monitor autovacuum sessions, the most reliable way is to use autovacuum logging. You might also find some autovacuum information in the view pg_stat_all_tables, such as the number of dead tuples and the autovacuum date. However, those table stats are based on estimates and might not be populated in some circumstances. Logging can provide detailed messages about each autovacuum session: its run time, duration, system resource usage, progress on removing dead tuples, and so on. You can set a different logging level for troubleshooting purposes.
+
+The following is an excerpt from the PostgreSQL error log after I set rds.force_autovacuum_logging_level to ‘log’ and log_autovacuum_min_duration to 1000.
+
+2017-09-11 14:35:28 UTC::@:[46017]:LOG:  automatic vacuum of table "oltp101.sh.table10": index scans: 1
+        pages: 0 removed, 747397 remain, 0 skipped due to pins, 138 skipped frozen
+        tuples: 48089 removed, 69738579 remain, 573231 are dead but not yet removable
+        buffer usage: 756502 hits, 549470 misses, 117812 dirtied
+        avg read rate: 16.254 MB/s, avg write rate: 3.485 MB/s
+        system usage: CPU 1.36s/27.45u sec elapsed 264.09 sec 
+
+I found that it’s convenient to use the API to extract autovacuum messages from the PostgreSQL error log:
+
+export region=us-east-1
+export db_name=oltp101
+export schema_name=sh
+export table_name=table1
+export hours_to_check=24
+
+/apollo/env/AmazonAwsCli/bin/aws rds describe-db-log-files --region ${region} --db-instance-identifier ${db_name} --output text | sort -k2 -n | tail -${hours_to_check} | awk -F' ' '{print $3}' | while read i;
+do
+/apollo/env/AmazonAwsCli/bin/aws rds download-db-log-file-portion --region ${region} --db-instance-identifier ${db_name} --log-file-name ${i} --output text | grep -A 5 "automatic vacuum of table \"${db_name}.${schema_name}.${table_name}\""
+done 
+
+Summary
+In this post, I presented a case study of how I tuned the autovacuum process on OLTP databases that have a high volume of write operations. You learned from my lesson that when autovacuum cannot clean up dead tuples quickly enough, bloat happens and causes database performance issues. You also learned how to tune parameters and monitor autovacuum.
+
+I hope that this post provides you with a better understanding of autovacuum in Amazon RDS for PostgreSQL, and helps make your life as a database owner easier. You can find more information in the PostgreSQL documentation and the Amazon RDS documentation.
