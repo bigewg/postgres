@@ -3,3 +3,10 @@ https://postgrespro.com/blog/pgsql/5968020
 
 13.3. Explicit Locking
 https://www.postgresql.org/docs/15/explicit-locking.html
+
+Блокировки в PostgreSQL: 2. Блокировки строк
+https://habr.com/ru/company/postgrespro/blog/463819/
+
+A Case Study of Tuning Autovacuum in Amazon RDS for PostgreSQL
+https://aws.amazon.com/ru/blogs/database/a-case-study-of-tuning-autovacuum-in-amazon-rds-for-postgresql/
+
