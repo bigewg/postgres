@@ -9,3 +9,10 @@ sudo apt update && sudo apt upgrade -y -q && sudo sh -c 'echo "deb http://apt.po
  pg_ctlcluster 15 main start
  pg_ctlcluster 15 main stop
 
+Проверить измененные параметры:
+SELECT coalesce(role.rolname, 'database wide') as role,
+       coalesce(db.datname, 'cluster wide') as database,
+       setconfig as what_changed
+FROM pg_db_role_setting role_setting
+LEFT JOIN pg_roles role ON role.oid = role_setting.setrole
+LEFT JOIN pg_database db ON db.oid = role_setting.setdatabase;
