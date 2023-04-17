@@ -16,3 +16,21 @@ SELECT coalesce(role.rolname, 'database wide') as role,
 FROM pg_db_role_setting role_setting
 LEFT JOIN pg_roles role ON role.oid = role_setting.setrole
 LEFT JOIN pg_database db ON db.oid = role_setting.setdatabase;
+
+Отслеживать прогресс создания индекса.
+--progress create index
+SELECT
+  now()::TIME(0),
+  a.query,
+  p.phase,
+  round(p.blocks_done / p.blocks_total::numeric * 100, 2) AS "% done",
+  p.blocks_total,
+  p.blocks_done,
+  p.tuples_total,
+  p.tuples_done,
+  ai.schemaname,
+  ai.relname,
+  ai.indexrelname
+FROM pg_stat_progress_create_index p
+JOIN pg_stat_activity a ON p.pid = a.pid
+LEFT JOIN pg_stat_all_indexes ai on ai.relid = p.relid AND ai.indexrelid = p.index_relid;
