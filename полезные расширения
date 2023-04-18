@@ -1,0 +1,3 @@
+Для отслеживания фрагментации объектов.
+CREATE EXTENSION pgstattuple;
+SELECT * FROM pgstatindex('spatial_ref_sys_pkey');
