@@ -1,0 +1,15 @@
+Основы мониторинга PostgreSQL. Алексей Лесовск
+https://habr.com/ru/articles/486710/
+
+Использование статистики в PostgreSQL для оптимизации производительности — Алексей Ермаков
+https://habr.com/ru/companies/pgdayrussia/articles/329542/
+
+Статистика работы PostgreSQL - Sysadminium
+https://sysadminium.ru/statistika_raboty_postgresql/
+
+Мониторим базу PostgreSQL — кто виноват, и что делать
+https://habr.com/ru/companies/tensor/articles/502478/
+
+Приложение F. Дополнительно поставляемые модули
+F.32. pg_stat_statements
+https://postgrespro.ru/docs/postgresql/15/pgstatstatements
