@@ -1,0 +1,11 @@
+Партиционирование в PostgreSQL – Что? Зачем? Как?
+https://habr.com/ru/post/273933/
+
+GitHub - pgpartman/pg_partman: Partition management extension for PostgreSQL
+https://github.com/pgpartman/pg_partman
+
+GitHub - postgrespro/pg_pathman: Partitioning tool for PostgreSQL
+https://github.com/postgrespro/pg_pathman
+
+Time series данные в реляционной СУБД. Расширения TimescaleDB и PipelineDB для PostgreSQL
+https://habr.com/ru/companies/oleg-bunin/articles/464303/
