@@ -137,20 +137,43 @@ full join model_bus mb on b.id_model=mb.id;
 
 ```
 6. Несколько видов джойнов в одном выражении.
-Создаем дополнительную таблицу. 
+Создаем дополнительную таблицу с датами поездок отдельных автобусов. И сделаем отчет о разных поездках с датами и видами автобусов.
 ```
-create table road_log (id serial,id_road int, date_road date);
+create table road_log (id serial,id_bus int, dater date);
 insert into  road_log  values(1,1,'2022-01-01' :: TIMESTAMP),(2,1,'2022-01-02' :: TIMESTAMP),(3,1,'2022-01-03' :: TIMESTAMP),(4,2,'2022-01-01' :: TIMESTAMP),(5,3,'2022-01-02' :: TIMESTAMP);
 select * from road_log;
- id | id_road | date_road  
-----+---------+------------
-  1 |       1 | 2022-01-01
-  2 |       1 | 2022-01-02
-  3 |       1 | 2022-01-03
-  4 |       2 | 2022-01-01
-  5 |       3 | 2022-01-02
+ id | id_bus |   dater    
+----+--------+------------
+  1 |      1 | 2022-01-01
+  2 |      1 | 2022-01-02
+  3 |      1 | 2022-01-03
+  4 |      2 | 2022-01-01
+  5 |      3 | 2022-01-02
 
-```
-7.
-```
+select *
+from bus b
+left join model_bus mb
+    on b.id_model=mb.id
+join road_log rl 
+    on b.id=rl.id_bus;
+    
+ id |      route       | id_model | id | name | id | id_bus |   dater    
+----+------------------+----------+----+------+----+--------+------------
+  1 | Москва-Болшево   |        1 |  1 | ПАЗ  |  1 |      1 | 2022-01-01
+  1 | Москва-Болшево   |        1 |  1 | ПАЗ  |  2 |      1 | 2022-01-02
+  1 | Москва-Болшево   |        1 |  1 | ПАЗ  |  3 |      1 | 2022-01-03
+  2 | Москва-Пушкино   |        1 |  1 | ПАЗ  |  4 |      2 | 2022-01-01
+  3 | Москва-Ярославль |        2 |  2 | ЛИАЗ |  5 |      3 | 2022-01-02
+
+                                     QUERY PLAN                                      
+-------------------------------------------------------------------------------------
+ Hash Join  (cost=2.42..41.29 rows=82 width=61)
+   Hash Cond: (rl.id_bus = b.id)
+   ->  Seq Scan on road_log rl  (cost=0.00..30.40 rows=2040 width=12)
+   ->  Hash  (cost=2.32..2.32 rows=8 width=49)
+         ->  Hash Left Join  (cost=1.16..2.32 rows=8 width=49)
+               Hash Cond: (b.id_model = mb.id)
+               ->  Seq Scan on bus b  (cost=0.00..1.08 rows=8 width=37)
+               ->  Hash  (cost=1.07..1.07 rows=7 width=12)
+                     ->  Seq Scan on model_bus mb  (cost=0.00..1.07 rows=7 width=12)
 ```
