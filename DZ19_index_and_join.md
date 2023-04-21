@@ -36,7 +36,18 @@ select id from test where id = 1;
 ```
 Видим, что после создания индекса план улучшился.
 
-3. Индекс для полнотекстного поиска.
+3. Индекс на часть таблицы.  
+```
+create index idx_test_id_less_100 on test(id) where id < 100;   
+explain
+select * from test where id < 50;
+                                QUERY PLAN                                
+--------------------------------------------------------------------------
+ Index Scan using idx_test_id on test  (cost=0.29..9.16 rows=50 width=31)
+   Index Cond: (id < 50)
+```
+
+4. Индекс для полнотекстного поиска.
 Создадим таблицу заказов и заполним ее данными.
 ```
 create table orders (
