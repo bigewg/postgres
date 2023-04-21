@@ -45,9 +45,50 @@ select * from test where id < 50;
 --------------------------------------------------------------------------
  Index Scan using idx_test_id on test  (cost=0.29..9.16 rows=50 width=31)
    Index Cond: (id < 50)
-```
+```  
 
-4. Индекс для полнотекстного поиска.
+4. Индекс на поле с функцией.  
+```
+create index idx_test_id_is_okay on test(lower(is_okay)); 
+explain
+select * from test where lower(is_okay) = 'true';
+                                     QUERY PLAN                                     
+------------------------------------------------------------------------------------
+ Bitmap Heap Scan on test  (cost=6.23..367.67 rows=250 width=31)
+   Recheck Cond: (lower(is_okay) = 'true'::text)
+   ->  Bitmap Index Scan on idx_test_id_is_okay  (cost=0.00..6.17 rows=250 width=0)
+         Index Cond: (lower(is_okay) = 'true'::text)
+``` 
+
+5. Составной индекс.
+```
+create index idx_test_id_is_okay on test(id, is_okay);
+explain
+select * from test where id = 1 and is_okay = 'True';
+                                    QUERY PLAN                                    
+----------------------------------------------------------------------------------
+ Index Scan using idx_test_id_less_100 on test  (cost=0.14..8.16 rows=1 width=31)
+   Index Cond: (id = 1)
+   Filter: (is_okay = 'True'::text)
+
+explain
+select * from test where id = 1;
+                                    QUERY PLAN                                    
+----------------------------------------------------------------------------------
+ Index Scan using idx_test_id_less_100 on test  (cost=0.14..8.16 rows=1 width=31)
+   Index Cond: (id = 1)
+
+explain
+select * from test where is_okay = 'True';
+                       QUERY PLAN                       
+--------------------------------------------------------
+ Seq Scan on test  (cost=0.00..1008.00 rows=1 width=31)
+   Filter: (is_okay = 'True'::text)
+(2 rows)
+```
+Как видим индекс используетя, если мы запрашиваем данные по 2-м полям или по первому. При запросе только по второву и последующим полям индекс использоваться не будет.
+
+6. Индекс для полнотекстного поиска.
 Создадим таблицу заказов и заполним ее данными.
 ```
 create table orders (
