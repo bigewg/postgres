@@ -28,7 +28,7 @@ alter system set shared_preload_libraries='pg_stat_statements';
 ```
 Рестартануть кластер.
 
-SELECT total_exec_time,total_exec_time/calls as avg_exec_time_ms ,total_exec_time/calls,temp_blks_written,query AS query
+SELECT total_exec_time,total_exec_time/calls as avg_exec_time_ms , temp_blks_written,query AS query
 FROM pg_stat_statements 
 WHERE temp_blks_written > 1000
 ORDER BY temp_blks_written DESC;
