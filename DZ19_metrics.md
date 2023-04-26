@@ -17,7 +17,7 @@ SELECT pid,now() - pg_stat_activity.query_start AS duration,  query,  state
 FROM pg_stat_activity
 WHERE (now() - pg_stat_activity.query_start) > interval '30 minutes';
 ```
-3. Запросы, использующие много temp. 
+3. Запросы, использующие много temp.   
 Предварительно надо установить расширение:
 ```
 CREATE EXTENSION pg_stat_statements;
