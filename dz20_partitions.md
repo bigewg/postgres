@@ -1,12 +1,12 @@
 1. Создаем виртуальную машину и устанавливаем постгрес.
-2. скачиваем демонстрационную бд полетов с https://postgrespro.com/docs/postgrespro/15/demodb-bookings-installation или русскую с https://www.postgrespro.ru/education/demodb
+2. Скачиваем демонстрационную бд полетов с https://postgrespro.com/docs/postgrespro/15/demodb-bookings-installation или русскую с https://www.postgrespro.ru/education/demodb
 3. Копируем архив с демо-базой на виртуальную машину и устанавливаем.
 ```
 bigewg@dz20:/tmp$ unzip demo-small.zip
 bigewg@dz20:/tmp$ sudo -i -u postgres
 postgres@dz20:~$ psql -f /tmp/demo-small-20170815.sql -U postgres
 ```
-4. Выберем таблицу для секционирования.
+4. Выбираем таблицу для секционирования.
 ```
 demo=# \d bookings
                         Table "bookings.bookings"
