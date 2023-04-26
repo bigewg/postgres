@@ -60,10 +60,13 @@ demo=#  select count(*),DATE_TRUNC('month',book_date) from bookings_part  group 
 ERROR:  unique constraint on partitioned table must include all partitioning columns
 DETAIL:  PRIMARY KEY constraint on table "bookings_part" lacks column "book_date" which is part of the partition key.
 ```
- По сути каждая партиция - это отдельная таблица. Поэтому уникальность мы можем гарантировать, только если добавим book_date к полям нашего индекса.
+ По сути каждая партиция - это отдельная таблица. Поэтому уникальность в границах всех партиций мы можем гарантировать, только если добавим book_date к полям нашего индекса.
 ```
 demo=#  ALTER TABLE bookings_part add PRIMARY KEY (book_ref,book_date);
 ```
-
+Но в этом случае внешний ключ вообще не получится создать, из-за того, что поле book_ref не имеет уникального индекса.
+```
+ERROR:  there is no unique constraint matching given keys for referenced table "tickets"
+```
 
 
