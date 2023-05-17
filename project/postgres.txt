@@ -5,3 +5,19 @@ sudo apt update && sudo apt upgrade -y -q && sudo sh -c 'echo "deb http://apt.po
 
 На обеих нодах отключаем сервис
 root@patroni-node2:~#  systemctl disable postgresql.service 
+
+на 1
+root@patroni-node1:~# add-apt-repository universe
+root@patroni-node1:~# apt update
+root@patroni-node1:~# apt -y install python3-pip
+
+на 2
+root@patroni-node1:~# apt update
+root@patroni-node1:~# apt -y install python3-pip
+
+обе
+root@patroni-node2:~# sudo apt-get install python3-psycopg2 
+root@patroni-node2:~# pip install psycopg2-binary
+root@patroni-node1:~# pip install psycopg2
+root@patroni-node1:~# pip install psycopg[binary]
+root@patroni-node1:~# pip install patroni[etcd]
