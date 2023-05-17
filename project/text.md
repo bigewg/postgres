@@ -107,3 +107,8 @@ root@patroni-node1:~# etcdctl member list
 1b6605ca8318e2d0: name=etcd-node3 peerURLs=http://158.160.8.220:2380 clientURLs=http://158.160.8.220:2379 isLeader=false
 22822b8c7bafead5: name=etcd-node1 peerURLs=http://158.160.25.27:2380 clientURLs=http://158.160.25.27:2379 isLeader=true
 ```
+
+Устанавливаем постгрес 15:
+```
+
+```
