@@ -56,3 +56,32 @@ Restart=no
 [Install]
 WantedBy=multi-user.target
 
+root@patroni-node1:~# systemctl daemon-reload
+root@patroni-node1:~# systemctl enable patroni
+Created symlink /etc/systemd/system/multi-user.target.wants/patroni.service → /etc/systemd/system/patroni.service.
+
+root@patroni-node1:/etc/default# systemctl stop postgresql
+root@patroni-node1:/etc/default# sudo -u postgres pg_dropcluster 15 main
+Warning: systemd was not informed about the removed cluster yet. Operations like "service postgresql start" might fail. To fix, run:
+  sudo systemctl daemon-reload
+root@patroni-node1:/etc/default#  sudo systemctl daemon-reload
+service patroni start
+
+root@patroni-node1:~#  patronictl -c /etc/patroni.yml list
++ Cluster: pg-ha-cluster ---+--------------+---------+----+-----------+
+| Member   | Host           | Role         | State   | TL | Lag in MB |
++----------+----------------+--------------+---------+----+-----------+
+| pg_node1 | 158.160.25.27  | Leader       | running |  2 |           |
+| pg_node2 | 158.160.18.188 | Sync Standby | running |  2 |         0 |
++----------+----------------+--------------+---------+----+-----------+
+root@patroni-node1:~# systemctl stop patroni
+root@patroni-node1:~# systemctl start patroni
+root@patroni-node1:~# patronictl -c /etc/patroni.yml list
+
++ Cluster: pg-ha-cluster ---+---------+---------+----+-----------+
+| Member   | Host           | Role    | State   | TL | Lag in MB |
++----------+----------------+---------+---------+----+-----------+
+| pg_node1 | 158.160.25.27  | Replica | stopped |    |   unknown |
+| pg_node2 | 158.160.18.188 | Leader  | running |  3 |           |
++----------+----------------+---------+---------+----+-----------+
+
