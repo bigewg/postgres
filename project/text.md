@@ -94,7 +94,16 @@ member 22822b8c7bafead5 is healthy: got healthy result from http://51.250.30.89:
 cluster is healthy
 ```
 
-root@patroni-node2:~# etcdctl cluster-health
-member 111a8236677efc9 is healthy: got healthy result from http://158.160.18.188:2379
-member 22822b8c7bafead5 is healthy: got healthy result from http://51.250.30.89:2379
-cluster is healthy
+После успешного добавления всех узлов проводим окончательную корректировку конфигурации на всех узлах кластера:
+— переменная ETCD_INITIAL_CLUSTER_STATE должна содержать значение «existing»;
+— ETCD_INITIAL_CLUSTER должна содержать все узлы кластера: 
+etcd-node1=http://51.250.30.89:2380,etcd-node2=http://158.160.18.188:2380,etcd-node3=http://84.201.163.89:2380
+Для проверки перезапускаем каждую ноду и проверяем их состояние.
+
+ип сменились
+```
+root@patroni-node1:~# etcdctl member list
+111a8236677efc9: name=etcd-node2 peerURLs=http://158.160.18.188:2380 clientURLs=http://158.160.18.188:2379 isLeader=false
+1b6605ca8318e2d0: name=etcd-node3 peerURLs=http://158.160.8.220:2380 clientURLs=http://158.160.8.220:2379 isLeader=false
+22822b8c7bafead5: name=etcd-node1 peerURLs=http://158.160.25.27:2380 clientURLs=http://158.160.25.27:2379 isLeader=true
+```
