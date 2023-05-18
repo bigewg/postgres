@@ -1,4 +1,24 @@
+https://1cloud.ru/help/monitoring_system_helps/prometheus_install_on_ubuntu
+
 wget https://github.com/prometheus/prometheus/releases/download/v2.44.0/prometheus-2.44.0.linux-amd64.tar.gz
 mkdir /etc/prometheus && mkdir /var/lib/prometheus;
 tar -xvf prometheus-2.44.0.linux-amd64
 cd prometheus-2.44.0.linux-amd64
+cp prometheus promtool /usr/local/bin/
+cp -r console_libraries consoles prometheus.yml /etc/prometheus 
+useradd --no-create-home --shell /bin/false prometheus;
+chown -R prometheus:prometheus /etc/prometheus /var/lib/prometheus
+chown prometheus:prometheus /usr/local/bin/{prometheus,promtool} 
+
+Добавим в конец конфигурационного файла prometheus.yml заранее созданные ноды: 
+- job_name: "node1"
+  static_configs:
+    - targets: ["84.252.140.247:9100"]
+- job_name: "node2"
+  static_configs:
+    - targets: ["62.84.120.101:9100"]
+- job_name: "node3"
+  static_configs:
+    - targets: ["51.250.105.209:9100"]
+
+
