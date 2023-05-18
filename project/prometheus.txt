@@ -1,0 +1,4 @@
+wget https://github.com/prometheus/prometheus/releases/download/v2.44.0/prometheus-2.44.0.linux-amd64.tar.gz
+mkdir /etc/prometheus && mkdir /var/lib/prometheus;
+tar -xvf prometheus-2.44.0.linux-amd64
+cd prometheus-2.44.0.linux-amd64
