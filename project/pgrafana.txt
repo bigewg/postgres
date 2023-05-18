@@ -7,3 +7,6 @@ root@monitoring:~# sudo systemctl start grafana-server
 root@monitoring:~# sudo systemctl status grafana-server
 
 root@monitoring:~# sudo systemctl enable grafana-server.service
+
+веб доступен по
+http://51.250.104.52:3000
