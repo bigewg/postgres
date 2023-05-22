@@ -11,14 +11,45 @@ chown -R prometheus:prometheus /etc/prometheus /var/lib/prometheus
 chown prometheus:prometheus /usr/local/bin/{prometheus,promtool} 
 
 Добавим в конец конфигурационного файла prometheus.yml заранее созданные ноды: 
-- job_name: "node1"
-  static_configs:
-    - targets: ["84.252.140.247:9100"]
-- job_name: "node2"
-  static_configs:
-    - targets: ["62.84.120.101:9100"]
-- job_name: "node3"
-  static_configs:
-    - targets: ["51.250.105.209:9100"]
+root@monitoring:~# vi /etc/prometheus/prometheus.yml 
+или ничего про ноды не пишем
+
+Для проверки работоспособности можно запустить команду и перейти по ссылке
+/usr/local/bin/prometheus --config.file /etc/prometheus/prometheus.yml
+http://ip_your_servis:9090
+
+После ручного запуска Prometheus иногда сбиваются права доступа, поэтому выполним ещё раз команду: 
+chown -R prometheus:prometheus /var/lib/prometheus
+Теперь автоматизируем запуск Prometheus через systemd. Выполните команду vim /etc/systemd/system/prometheus.service и внесите следующие параметры: 
+```
+[Unit]
+Description=Prometheus Service
+After=network.target
+
+[Service]
+User=prometheus
+Group=prometheus
+Type=simple
+ExecStart=/usr/local/bin/prometheus \
+--config.file /etc/prometheus/prometheus.yml \
+--storage.tsdb.path /var/lib/prometheus/ \
+--web.console.templates=/etc/prometheus/consoles \
+--web.console.libraries=/etc/prometheus/console_libraries
+ExecReload=/bin/kill -HUP $MAINPID
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target 
+```
+
+Выполним 3 команды systemd для запуска Prometeus в режиме демона:
+systemctl enable prometheus
+systemctl start prometheus
+systemctl status prometheus 
+
+
+
+
+
 
 
