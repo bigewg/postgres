@@ -1,0 +1,60 @@
+cd ~
+Скачаем архив с AlertManager с официального сайта разработчиков командой 
+wget https://github.com/prometheus/alertmanager/releases/download/v0.25.0/alertmanager-0.25.0.linux-amd64.tar.gz
+
+Распакуем архив: 
+tar xvf  alertmanager-0.25.0.linux-amd64.tar.gz
+
+Удалим скачанный архив: 
+rm alertmanager-0.25.0.linux-amd64.tar.gz
+
+Создадим директории для распределения скаченных файлов: 
+mkdir /etc/alertmanager /var/lib/prometheus/alertmanager;
+
+Перейдём в директорию с распакованным AlertManager:
+cd alertmanager-0.25.0.linux-amd64
+
+Распределим файлы по созданным каталогам:
+cp alertmanager amtool /usr/local/bin/ && cp alertmanager.yml /etc/alertmanager
+
+Создаем пользователя, от имени которого будет запускаться AlertManager: 
+useradd --no-create-home --shell /bin/false alertmanager
+
+Устанавливаем права для каталогов и файлов пользователя AlerManager:
+chown -R alertmanager:alertmanager /etc/alertmanager /var/lib/prometheus/alertmanager
+chown alertmanager:alertmanager /usr/local/bin/{alertmanager,amtool}
+
+Настраиваем запуск AlertManager как демона через systemd:
+    Создадим юнит — vim /etc/systemd/system/alertmanager.service;
+    Добавим в юнит следующие параметры для запуска
+```
+[Unit]
+Description=Alertmanager Service
+After=network.target
+
+[Service]
+EnvironmentFile=-/etc/default/alertmanager
+User=alertmanager
+Group=alertmanager
+Type=simple
+ExecStart=/usr/local/bin/alertmanager \
+--config.file=/etc/alertmanager/alertmanager.yml \
+--storage.path=/var/lib/prometheus/alertmanager \
+--cluster.advertise-address="127.0.0.1:9093"\
+$ALERTMANAGER_OPTS
+ExecReload=/bin/kill -HUP $MAINPID
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target 
+```
+
+Перечитываем конфигурацию systemd командой: 
+systemctl daemon-reload;
+
+Разрешаем автозапуск командой: 
+systemctl enable alertmanager;
+
+Запускаем службу и Проверяем её статус: 
+systemctl start alertmanager;
+systemctl status alertmanager;
