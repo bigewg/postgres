@@ -48,7 +48,17 @@ systemctl start prometheus
 systemctl status prometheus 
 
 
+Добавление алерт манагера
+sudo vi /etc/prometheus/prometheus.yml
 
+Under alerting, add your Alertmanager as a target:
+alerting:
+  alertmanagers:
+  - static_configs:
+    - targets: ["localhost:9093"]
+
+Restart Prometheus to reload the configuration:
+sudo systemctl restart prometheus
 
 
 
