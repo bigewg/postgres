@@ -1,3 +1,5 @@
+https://1cloud.ru/help/monitoring_system_helps/alertmanager_install_ubuntu_18
+
 cd ~
 Скачаем архив с AlertManager с официального сайта разработчиков командой 
 wget https://github.com/prometheus/alertmanager/releases/download/v0.25.0/alertmanager-0.25.0.linux-amd64.tar.gz
@@ -25,7 +27,8 @@ chown -R alertmanager:alertmanager /etc/alertmanager /var/lib/prometheus/alertma
 chown alertmanager:alertmanager /usr/local/bin/{alertmanager,amtool}
 
 Настраиваем запуск AlertManager как демона через systemd:
-    Создадим юнит — vim /etc/systemd/system/alertmanager.service;
+    Создадим юнит — 
+vim /etc/systemd/system/alertmanager.service;
     Добавим в юнит следующие параметры для запуска
 ```
 [Unit]
