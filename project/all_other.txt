@@ -1,8 +1,8 @@
 
 psql
-postgres=# CREATE USER grafanareader WITH PASSWORD 'password';
+postgres=# CREATE USER monitor WITH PASSWORD 'monitor';
 -- GRANT USAGE ON SCHEMA schema TO grafanareader;
 --GRANT SELECT ON schema.table TO grafanareader;
-postgres=# GRANT ALL PRIVILEGES ON DATABASE demo to grafanareader;
-postgres=# GRANT ALL PRIVILEGES ON DATABASE postgres to grafanareader;
+postgres=# GRANT ALL PRIVILEGES ON DATABASE demo to monitor;
+postgres=# GRANT ALL PRIVILEGES ON DATABASE postgres to monitor;
 
