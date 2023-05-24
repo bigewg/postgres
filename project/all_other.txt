@@ -6,3 +6,5 @@ postgres=# CREATE USER monitor WITH PASSWORD 'monitor';
 postgres=# GRANT ALL PRIVILEGES ON DATABASE demo to monitor;
 postgres=# GRANT ALL PRIVILEGES ON DATABASE postgres to monitor;
 
+или
+postgres=# ALTER USER postgres WITH PASSWORD 'postgres';
