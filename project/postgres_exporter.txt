@@ -1,0 +1,25 @@
+Установка экспортера
+
+Экспортер написан на Go, так что все банально:
+
+    Качаем нужный бинарник из https://github.com/wrouesnel/postgres_exporter/releases
+wget https://github.com/prometheus-community/postgres_exporter/releases/download/v0.12.0/postgres_exporter-0.12.0.linux-amd64.tar.gz
+    Определяем переменную окружения в env-файле DATA_SOURCE_NAME="postgresql://postgres@localhost:5432/?sslmode=disable"
+    Создаем systemd юнит, типа такого:
+
+
+[Unit]
+Description=Prometheus exporter for Postgresql (https://github.com/wrouesnel/postgres_exporter)
+
+[Service]
+WorkingDirectory=/opt/postgres_exporter
+EnvironmentFile=/opt/postgres_exporter/env
+ExecStart=/opt/postgres_exporter/postgres_exporter_v0.4.1_linux-amd64/postgres_exporter --extend.query-path=/opt/postgres_exporter/metrics.yaml --web.listen-address=:9187
+User=pg_exporter
+
+[Install]
+WantedBy=multi-user.target
+
+
+    Создаем файл с кастомными запросами для своих метрик (см. ниже);
+    Запускаем сервис.
