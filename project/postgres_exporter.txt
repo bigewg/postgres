@@ -1,6 +1,7 @@
 Установка экспортера
 https://mcs.mail.ru/docs/en/additionals/cases/cases-monitoring/case-psql-exporter#
 https://github.com/prometheus-community/postgres_exporter/blob/master/README.md
+https://habr.com/ru/articles/345370/
 
 Экспортер написан на Go, так что все банально:
 
