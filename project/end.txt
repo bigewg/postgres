@@ -1,0 +1,11 @@
+после установки explorera
+
+добавляем в конфигурацию прометеуса постгрес
+cat >> /etc/prometheus/prometheus.yml
+  - job_name: postgresql
+    static_configs:
+      - targets: ['158.160.67.97:9187']
+        labels:
+        alias: postgres
+
+systemctl reload prometheus.service
