@@ -1,24 +1,37 @@
 Установка экспортера
+https://mcs.mail.ru/docs/en/additionals/cases/cases-monitoring/case-psql-exporter#
 
 Экспортер написан на Go, так что все банально:
 
     Качаем нужный бинарник из https://github.com/wrouesnel/postgres_exporter/releases
-wget https://github.com/prometheus-community/postgres_exporter/releases/download/v0.12.0/postgres_exporter-0.12.0.linux-amd64.tar.gz
     Определяем переменную окружения в env-файле DATA_SOURCE_NAME="postgresql://postgres@localhost:5432/?sslmode=disable"
     Создаем systemd юнит, типа такого:
 
-
-[Unit]
-Description=Prometheus exporter for Postgresql (https://github.com/wrouesnel/postgres_exporter)
+from root    
+wget https://github.com/prometheus-community/postgres_exporter/releases/download/v0.12.0/postgres_exporter-0.12.0.linux-amd64.tar.gz
+tar -xvf postgres_exporter-0.12.0.linux-amd64.tar.gz 
+sudo cp postgres_exporter-0.12.0.linux-amd64/postgres_exporter /usr/local/bin/
+chown -R postgres:postgres /usr/local/bin/postgres_exporter
+rm -rf postgres_exporter-0.12.0.linux-amd64 
+cat > /etc/systemd/system/postgres_exporter.service
+[unit]
+Description=Prometheus PostgreSQL Exporter
+After=network.target
 
 [Service]
-WorkingDirectory=/opt/postgres_exporter
-EnvironmentFile=/opt/postgres_exporter/env
-ExecStart=/opt/postgres_exporter/postgres_exporter_v0.4.1_linux-amd64/postgres_exporter --extend.query-path=/opt/postgres_exporter/metrics.yaml --web.listen-address=:9187
-User=pg_exporter
-
+Type=simple
+Restart=always
+User=postgres
+group=postgres
+Environment=DATA_SOURCE_NAME="user=postgres host=/var/run/postgresql/ sslmode=disable"
+ExecStart=/usr/local/bin/postgres_exporter
 [Install]
 WantedBy=multi-user.target
+
+root@postgresql:~# systemctl daemon-reload
+root@postgresql:~# systemctl start postgres_exporter.service
+root@postgresql:~# systemctl enable postgres_exporter.service
+systemctl status postgres_exporter.service
 
 
     Создаем файл с кастомными запросами для своих метрик (см. ниже);
