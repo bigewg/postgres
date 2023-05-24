@@ -1,5 +1,6 @@
 https://1cloud.ru/blog/grafana_prometheus_system
 https://1cloud.ru/blog/prometheus_servers_claster_monitoring#Prometheus
+https://itcloud-edu.ru/articles/44457.html
 
 Закачиваем графану, т.к. прямого доступа и России нет.
 [ewg@11uha Downloads]$ scp grafana-enterprise_9.5.2_amd64.deb bigewg@51.250.104.52:/tmp
@@ -12,4 +13,4 @@ root@monitoring:~# sudo systemctl status grafana-server
 root@monitoring:~# sudo systemctl enable grafana-server.service
 
 веб доступен по
-http://51.250.104.52:3000
+http:/158.160.4.56:3000
