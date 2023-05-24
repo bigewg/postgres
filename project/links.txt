@@ -3,3 +3,5 @@ https://1cloud.ru/help/monitoring_system_helps/prometheus_install_on_ubuntu
 https://1cloud.ru/blog/prometheus_servers_claster_monitoring#Prometheus
 https://1cloud.ru/help/monitoring_system_helps/alertmanager_install_ubuntu_18
 https://1cloud.ru/help/monitoring_system_helps/grafana_ubuntu_18_install
+
+https://sysadmintalks.ru/postgres-prometheus-grafana/
