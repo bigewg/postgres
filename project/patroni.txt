@@ -85,3 +85,22 @@ root@patroni-node1:~# patronictl -c /etc/patroni.yml list
 | pg_node2 | 158.160.18.188 | Leader  | running |  3 |           |
 +----------+----------------+---------+---------+----+-----------+
 
+
+
+
+root@patroni-node1:/etc/default# patronictl -c /etc/patroni.yml list
++ Cluster: pg-ha-cluster +---------+---------+----+-----------+
+| Member   | Host        | Role    | State   | TL | Lag in MB |
++----------+-------------+---------+---------+----+-----------+
+| pg_node1 | 10.129.0.24 | Leader  | running |  8 |           |
+| pg_node2 | 10.129.0.10 | Replica | running |  6 |        32 |
++----------+-------------+---------+---------+----+-----------+
+root@patroni-node1:/etc/default# patronictl -c /etc/patroni.yml list
++ Cluster: pg-ha-cluster +--------------+---------+----+-----------+
+| Member   | Host        | Role         | State   | TL | Lag in MB |
++----------+-------------+--------------+---------+----+-----------+
+| pg_node1 | 10.129.0.24 | Leader       | running |  8 |           |
+| pg_node2 | 10.129.0.10 | Sync Standby | running |  8 |         0 |
++----------+-------------+--------------+---------+----+-----------+
+
+
