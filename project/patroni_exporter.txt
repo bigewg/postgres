@@ -9,3 +9,7 @@ root@patroni-node1:/tmp# unzip patroni_exporter-main.zip
 root@patroni-node1:/tmp# cd patroni_exporter-main/
 root@patroni-node1:/tmp/patroni_exporter-main#  make build
 
+root@patroni-node1:/tmp# cd patroni_exporter-main/.build/linux-amd64/
+root@patroni-node1:/tmp/patroni_exporter-main/.build/linux-amd64# cp patroni_exporter /usr/local/bin/
+root@patroni-node1:/tmp/patroni_exporter-main/.build/linux-amd64# chown -R postgres:postgres /usr/local/bin/patroni_exporter 
+
