@@ -30,6 +30,23 @@ ExecStart=/usr/local/bin/postgres_exporter
 [Install]
 WantedBy=multi-user.target
 
+
+в итоге юнит такой
+[Unit]
+Description=Prometheus PostgreSQL Exporter
+After=network.target
+
+[Service]
+Type=simple
+Restart=always
+User=postgres
+Group=postgres
+Environment=DATA_SOURCE_NAME="postgresql://postgres:postgres@localhost:5432/demo?sslmode=disable"
+ExecStart=/usr/local/bin/postgres_exporter
+[Install]
+WantedBy=multi-user.target
+
+
 root@postgresql:~# systemctl daemon-reload
 root@postgresql:~# systemctl start postgres_exporter.service
 root@postgresql:~# systemctl enable postgres_exporter.service
