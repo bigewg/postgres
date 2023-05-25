@@ -115,5 +115,10 @@ client: etcd cluster is unavailable or misconfigured; error #0: dial tcp 127.0.0
 удалила полностью старый кластер и запустила новый на внутренних ip
 root@patroni-node1:/etc/default# rm -rf /var/lib/etcd/member
 и повторила фокус с добавлением нод.
+root@patroni-node1:/etc/default# etcdctl cluster-health
+member b4fb757ca183a02 is healthy: got healthy result from http://10.129.0.10:2379
+member c58fd19d8eff6287 is healthy: got healthy result from http://10.129.0.24:2379
+member fb3dbf28f7e16b21 is healthy: got healthy result from http://10.129.0.7:2379
+cluster is healthy
 
 
