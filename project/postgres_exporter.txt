@@ -47,9 +47,9 @@ ExecStart=/usr/local/bin/postgres_exporter
 WantedBy=multi-user.target
 
 
-root@postgresql:~# systemctl daemon-reload
-root@postgresql:~# systemctl start postgres_exporter.service
-root@postgresql:~# systemctl enable postgres_exporter.service
+systemctl daemon-reload
+systemctl start postgres_exporter.service
+systemctl enable postgres_exporter.service
 systemctl status postgres_exporter.service
 
 
