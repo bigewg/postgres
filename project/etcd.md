@@ -107,4 +107,13 @@ root@patroni-node1:~# etcdctl member list
 1b6605ca8318e2d0: name=etcd-node3 peerURLs=http://158.160.8.220:2380 clientURLs=http://158.160.8.220:2379 isLeader=false
 22822b8c7bafead5: name=etcd-node1 peerURLs=http://158.160.25.27:2380 clientURLs=http://158.160.25.27:2379 isLeader=true
 ```
-  
+не прокатило с 
+root@patroni-node1:~# etcdctl member update 111a8236677efc9 http://158.160.6.143:2380
+client: etcd cluster is unavailable or misconfigured; error #0: dial tcp 127.0.0.1:4001: connect: connection refused
+; error #1: client: endpoint http://127.0.0.1:2379 exceeded header timeout
+
+удалила полностью старый кластер и запустила новый на внутренних ip
+root@patroni-node1:/etc/default# rm -rf /var/lib/etcd/member
+и повторила фокус с добавлением нод.
+
+
