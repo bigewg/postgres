@@ -1,4 +1,5 @@
 https://habr.com/ru/articles/322036/
+https://github.com/vorori/PostgreSQL_otus/blob/main/%D0%BC%D0%BE%D0%B9%20%D0%B4%D0%B8%D0%BF%D0%BB%D0%BE%D0%BC%20%D0%B2%D1%81%D0%B5%20%D1%87%D1%82%D0%BE%20%D0%B4%D0%B5%D0%BB%D0%B0%D0%BB%20Centos8.md
 
 Устанавливаем постгрес 15 на 1-ой и 2-ой нодах.
 ```
