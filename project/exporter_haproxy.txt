@@ -1,3 +1,4 @@
+можно так
 root@patroni-node3:/tmp# apt install unzip
 root@patroni-node3:/tmp# apt install make
 root@patroni-node3:/tmp/haproxy_exporter-main# apt  install golang-go 
@@ -5,3 +6,20 @@ root@patroni-node3:/tmp/haproxy_exporter-main# apt  install golang-go
 root@patroni-node3:/tmp# unzip haproxy_exporter-main.zip 
 root@patroni-node3:/tmp# cd haproxy_exporter-main/
 root@patroni-node3:/tmp/haproxy_exporter-main# make build
+
+а можно переделать сам haproxy
+https://www.haproxy.com/blog/haproxy-exposes-a-prometheus-metrics-endpoint/
+
+sudo apt update
+sudo apt install -y git ca-certificates gcc libc6-dev liblua5.3-dev libpcre3-dev libssl-dev libsystemd-dev make wget zlib1g-dev
+git clone https://github.com/haproxy/haproxy.git
+cd haproxy
+make TARGET=linux-glibc USE_LUA=1 USE_OPENSSL=1 USE_PCRE=1 USE_ZLIB=1 USE_SYSTEMD=1 USE_PROMEX=1
+sudo make install-bin
+
+sudo systemctl stop haproxy
+sudo cp /usr/local/sbin/haproxy /usr/sbin/haproxy
+sudo systemctl start haproxy
+
+haproxy -vv
+Built with the Prometheus exporter as a service
