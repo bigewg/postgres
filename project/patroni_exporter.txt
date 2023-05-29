@@ -1,4 +1,5 @@
 https://github.com/gopaytech/patroni_exporter
+патрони сам умеет отдавать стату для прометеуса по порту 8008
 scp patroni_exporter-main.zip 
 
 root@patroni-node1:/tmp# sudo apt-get install zip
