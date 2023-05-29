@@ -1,0 +1,7 @@
+root@patroni-node3:/tmp# apt install unzip
+root@patroni-node3:/tmp# apt install make
+root@patroni-node3:/tmp/haproxy_exporter-main# apt  install golang-go 
+
+root@patroni-node3:/tmp# unzip haproxy_exporter-main.zip 
+root@patroni-node3:/tmp# cd haproxy_exporter-main/
+root@patroni-node3:/tmp/haproxy_exporter-main# make build
