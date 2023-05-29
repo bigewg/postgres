@@ -23,3 +23,54 @@ sudo systemctl start haproxy
 
 haproxy -vv
 Built with the Prometheus exporter as a service
+
+исправить конфиг
+
+global
+     log 127.0.0.1   local2
+     log /dev/log    local0
+     log /dev/log    local1 notice
+     chroot /var/lib/haproxy
+     stats socket /var/lib/haproxy/stats
+     stats timeout 30s
+     user haproxy
+     group haproxy
+     maxconn 4000
+     daemon
+
+defaults
+    mode                    tcp
+    log                     global
+    option                  tcplog
+    retries                 3
+    timeout queue           1m
+    timeout connect         10s
+    timeout client          30m
+    timeout server          30m
+    timeout check           10s
+    maxconn                 3000
+
+listen stats
+  mode http
+  bind *:8404
+  http-request use-service prometheus-exporter if { path /metrics }
+  stats enable
+  stats uri /
+  stats refresh 10s
+
+listen primary_postgres_write
+    bind *:5000
+    option httpchk OPTIONS /master
+    http-check expect status 200
+    default-server inter 3s fall 3 rise 2 on-marked-down shutdown-sessions
+    server pg_node1 10.129.0.24:5432 maxconn 300 check port 8008
+    server pg_node2 10.129.0.10:5432 maxconn 300 check port 8008
+
+listen standby_postgres_read
+    bind *:5001
+    balance leastconn
+    option httpchk OPTIONS /replica
+    http-check expect status 200
+    default-server inter 3s fall 3 rise 2 on-marked-down shutdown-sessions
+    server pg_node1 10.129.0.24:5432 maxconn 300 check port 8008
+    server pg_node2 10.129.0.10:5432 maxconn 300 check port 8008
