@@ -8,3 +8,24 @@ postgres=# GRANT ALL PRIVILEGES ON DATABASE postgres to monitor;
 
 или
 postgres=# ALTER USER postgres WITH PASSWORD 'postgres';
+
+
+extentions
+bigewg@patroni-node1:~$ sudo apt install postgresql-15-pg-stat-kcache
+root@patroni-node1:~# sudo apt install postgresql-15-pg-wait-sampling
+
+root@patroni-node1:~# patronictl -c /etc/patroni.yml edit-config -p shared_preload_libraries=pg_stat_statements,pg_stat_kcache,pg_wait_sampling
+root@patroni-node1:~# patronictl -c /etc/patroni.yml  list
++ Cluster: pg-ha-cluster +--------------+---------+----+-----------+-----------------+
+| Member   | Host        | Role         | State   | TL | Lag in MB | Pending restart |
++----------+-------------+--------------+---------+----+-----------+-----------------+
+| pg_node1 | 10.129.0.24 | Sync Standby | running | 24 |         0 | *               |
+| pg_node2 | 10.129.0.10 | Leader       | running | 24 |           | *               |
++----------+-------------+--------------+---------+----+-----------+-----------------+
+root@patroni-node1:~# patronictl -c /etc/patroni.yml  restart pg-ha-cluster
+
+postgres=# CREATE EXTENSION pg_stat_statements;
+postgres=# CREATE EXTENSION pg_stat_kcache;
+postgres=# CREATE EXTENSION pg_wait_sampling;
+CREATE EXTENSION
+
