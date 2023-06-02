@@ -1,1 +1,8 @@
 SELECT usename, passwd FROM pg_catalog.pg_shadow;
+
+
+bigewg@patroni-node1:~$ sudo apt install -y pgbouncer
+bigewg@patroni-node1:~$ sudo chown postgres:postgres /etc/pgbouncer/ -R
+bigewg@patroni-node1:~$ sudo -u root -i
+root@patroni-node1:~# cat > /etc/pgbouncer/userlist.txt
+"postgres" "SCRAM-SHA-256$4096:tHkdjjhjyjNuDdpEqEHocQ==$Fzm7I4q56i8b8OkBjIBuuO3qliHjbRI2U3vtEVeX//E=:TtYyTAfxvohO0pZi7EXe2MWtKADoJgLYCGvwuwTLGCE="
