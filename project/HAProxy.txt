@@ -55,3 +55,5 @@ root@patroni-node3:/etc/haproxy# service haproxy status
 посмотреть вебморду haproxy в броузере 
 http://158.160.8.220:7000/
 
+можно вот отсюда добавить балансировку
+https://medium.com/@nicola.vitaly/setting-up-high-availability-postgresql-cluster-using-patroni-pgbouncer-docker-consul-and-95c70445b1b1
