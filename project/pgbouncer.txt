@@ -1,0 +1,1 @@
+SELECT usename, passwd FROM pg_catalog.pg_shadow;
