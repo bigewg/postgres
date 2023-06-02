@@ -1,0 +1,20 @@
+$ sudo apt-get install pgbouncer
+
+create user monitor with password 'monitor';
+alter user monitor with superuser;
+create database mydb;
+
+
+cat > /etc/pgbouncer/pgbouncer.ini.
+[databases]
+db1 = host=localhost dbname=mydb
+
+[pgbouncer]
+listen_addr = 127.0.0.1
+listen_port = 16432
+auth_file = userlist.txt
+
+cat > /etc/pgbouncer/userlist.txt
+"monitor" "md5638b81c77071ea624d1ad4adb1433540"
+
+ /usr/sbin/pgbouncer pgbouncer.ini
