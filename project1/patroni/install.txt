@@ -106,3 +106,15 @@ root@patroni-node1:/etc/default# patronictl -c /etc/patroni.yml list
 | pg_node2 | 10.129.0.10 | Sync Standby | running |  8 |         0 |
 +----------+-------------+--------------+---------+----+-----------+
 
+возможно файл конфигурации нужно создавать иначе 
+
+# mkdir /etc/patroni/
+# chown postgres:postgres /etc/patroni/
+# chmod 755 /etc/patroni/
+
+В каталоге создаём файл config.yml
+# chmod 640 /etc/patroni/config.yml
+
+Финальный вариант конфигурационных файлов для каждой ноды можно посмотреть тут:
+https://github.com/bigewg/postgres/tree/bfc553a92d86037478d61df22e6d881db4bfed2d/project1/patroni/configs
+
