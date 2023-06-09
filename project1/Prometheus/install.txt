@@ -1,0 +1,115 @@
+https://1cloud.ru/help/monitoring_system_helps/prometheus_install_on_ubuntu
+
+wget https://github.com/prometheus/prometheus/releases/download/v2.44.0/prometheus-2.44.0.linux-amd64.tar.gz
+mkdir /etc/prometheus && mkdir /var/lib/prometheus;
+tar -xvf prometheus-2.44.0.linux-amd64
+cd prometheus-2.44.0.linux-amd64
+cp prometheus promtool /usr/local/bin/
+cp -r console_libraries consoles prometheus.yml /etc/prometheus 
+useradd --no-create-home --shell /bin/false prometheus;
+chown -R prometheus:prometheus /etc/prometheus /var/lib/prometheus
+chown prometheus:prometheus /usr/local/bin/{prometheus,promtool} 
+
+Добавим в конец конфигурационного файла prometheus.yml заранее созданные ноды: 
+root@monitoring:~# vi /etc/prometheus/prometheus.yml 
+или ничего про ноды не пишем
+
+Для проверки работоспособности можно запустить команду и перейти по ссылке
+/usr/local/bin/prometheus --config.file /etc/prometheus/prometheus.yml
+http://ip_your_servis:9090
+
+После ручного запуска Prometheus иногда сбиваются права доступа, поэтому выполним ещё раз команду: 
+chown -R prometheus:prometheus /var/lib/prometheus
+Теперь автоматизируем запуск Prometheus через systemd. Выполните команду vim /etc/systemd/system/prometheus.service и внесите следующие параметры: 
+```
+[Unit]
+Description=Prometheus Service
+After=network.target
+
+[Service]
+User=prometheus
+Group=prometheus
+Type=simple
+ExecStart=/usr/local/bin/prometheus \
+--config.file /etc/prometheus/prometheus.yml \
+--storage.tsdb.path /var/lib/prometheus/ \
+--web.console.templates=/etc/prometheus/consoles \
+--web.console.libraries=/etc/prometheus/console_libraries
+ExecReload=/bin/kill -HUP $MAINPID
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target 
+```
+
+Выполним 3 команды systemd для запуска Prometeus в режиме демона:
+systemctl enable prometheus
+systemctl start prometheus
+systemctl status prometheus 
+
+
+Добавление алерт манагера
+sudo vi /etc/prometheus/prometheus.yml
+
+Under alerting, add your Alertmanager as a target:
+alerting:
+  alertmanagers:
+  - static_configs:
+    - targets: ["localhost:9093"]
+
+Restart Prometheus to reload the configuration:
+sudo systemctl restart prometheus
+
+# my global config
+global:
+  scrape_interval: 15s # Set the scrape interval to every 15 seconds. Default is every 1 minute.
+  evaluation_interval: 15s # Evaluate rules every 15 seconds. The default is every 1 minute.
+  # scrape_timeout is set to the global default (10s).
+
+# Alertmanager configuration
+alerting:
+  alertmanagers:
+    - static_configs:
+       - targets: ["localhost:9093"]
+
+# Load rules once and periodically evaluate them according to the global 'evaluation_interval'.
+rule_files:
+  # - "first_rules.yml"
+  # - "second_rules.yml"
+
+# A scrape configuration containing exactly one endpoint to scrape:
+# Here it's Prometheus itself.
+scrape_configs:
+  # The job name is added as a label `job=<job_name>` to any timeseries scraped from this config.
+  - job_name: "prometheus"
+    # metrics_path defaults to '/metrics'
+    # scheme defaults to 'http'.
+    static_configs:
+      - targets: ["localhost:9090"]
+  - job_name: "postgresql_db20"
+    static_configs:
+      - targets: ["10.129.0.21:9187"]
+        #alias: "postgres"
+  - job_name: "PostgresDB"
+    static_configs:
+      - targets: ['10.129.0.24:9187','10.129.0.10:9187']
+        #  - job_name: "postgres-node1"
+        #    static_configs:
+        #      - targets: ["10.129.0.10:9187"]
+  - job_name: "PatroniCl"
+    static_configs:
+      - targets: ['10.129.0.24:9933','10.129.0.10:9933']
+        #  - job_name: "patroni-node2"
+        #    static_configs:
+        #      - targets: ["10.129.0.10:9933"]
+  - job_name: 'etcd'
+    static_configs:
+    - targets: ['10.129.0.24:2379','10.129.0.10:2379','10.129.0.7:2379']
+  - job_name: 'PTR2'
+    static_configs:
+    - targets: ['10.129.0.24:8008','10.129.0.10:8008']
+  - job_name: 'Haproxy'
+    static_configs:
+    - targets: ['10.129.0.7:8404']
+
+
