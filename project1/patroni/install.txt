@@ -1,0 +1,108 @@
+https://habr.com/ru/articles/322036/
+https://github.com/vorori/PostgreSQL_otus/blob/main/%D0%BC%D0%BE%D0%B9%20%D0%B4%D0%B8%D0%BF%D0%BB%D0%BE%D0%BC%20%D0%B2%D1%81%D0%B5%20%D1%87%D1%82%D0%BE%20%D0%B4%D0%B5%D0%BB%D0%B0%D0%BB%20Centos8.md
+
+Устанавливаем постгрес 15 на 1-ой и 2-ой нодах.
+```
+sudo apt update && sudo apt upgrade -y -q && sudo sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list' && wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add - && sudo apt-get update && sudo apt -y install postgresql-15
+```
+
+На обеих нодах отключаем сервис
+root@patroni-node2:~#  systemctl disable postgresql.service 
+
+на 1
+root@patroni-node1:~# add-apt-repository universe
+root@patroni-node1:~# apt update
+root@patroni-node1:~# apt -y install python3-pip
+
+на 2
+root@patroni-node1:~# apt update
+root@patroni-node1:~# apt -y install python3-pip
+
+обе
+root@patroni-node2:~# sudo apt-get install python3-psycopg2 
+root@patroni-node2:~# pip install psycopg2-binary
+root@patroni-node1:~# pip install psycopg2
+root@patroni-node1:~# pip install psycopg[binary]
+root@patroni-node1:~# pip install patroni[etcd]
+
+Создаем сервис с содержимым
+ systemctl edit --full --force patroni.service
+# This is an example systemd config file for Patroni
+# You can copy it to "/etc/systemd/system/patroni.service",
+[Unit]
+Description=Runners to orchestrate a high-availability PostgreSQL
+After=syslog.target network.target
+[Service]
+Type=simple
+User=postgres
+Group=postgres
+# Read in configuration file if it exists, otherwise proceed
+EnvironmentFile=-/etc/patroni_env.conf
+WorkingDirectory=~
+# Where to send early-startup messages from the server
+# This is normally controlled by the global default set by systemd
+#StandardOutput=syslog
+# Pre-commands to start watchdog device
+# Uncomment if watchdog is part of your patroni setup
+#ExecStartPre=-/usr/bin/sudo /sbin/modprobe softdog
+#ExecStartPre=-/usr/bin/sudo /bin/chown postgres /dev/watchdog
+# Start the patroni process
+ExecStart=/usr/local/bin/patroni /etc/patroni.yml
+# Send HUP to reload from patroni.yml
+ExecReload=/bin/kill -s HUP $MAINPID
+# only kill the patroni process, not it's children, so it will gracefully stop postgres
+KillMode=process
+# Give a reasonable amount of time for the server to start up/shut down
+TimeoutSec=30
+# Do not restart the service if it crashes, we want to manually inspect database on failure
+Restart=no
+[Install]
+WantedBy=multi-user.target
+
+root@patroni-node1:~# systemctl daemon-reload
+root@patroni-node1:~# systemctl enable patroni
+Created symlink /etc/systemd/system/multi-user.target.wants/patroni.service → /etc/systemd/system/patroni.service.
+
+root@patroni-node1:/etc/default# systemctl stop postgresql
+root@patroni-node1:/etc/default# sudo -u postgres pg_dropcluster 15 main
+Warning: systemd was not informed about the removed cluster yet. Operations like "service postgresql start" might fail. To fix, run:
+  sudo systemctl daemon-reload
+root@patroni-node1:/etc/default#  sudo systemctl daemon-reload
+service patroni start
+
+root@patroni-node1:~#  patronictl -c /etc/patroni.yml list
++ Cluster: pg-ha-cluster ---+--------------+---------+----+-----------+
+| Member   | Host           | Role         | State   | TL | Lag in MB |
++----------+----------------+--------------+---------+----+-----------+
+| pg_node1 | 158.160.25.27  | Leader       | running |  2 |           |
+| pg_node2 | 158.160.18.188 | Sync Standby | running |  2 |         0 |
++----------+----------------+--------------+---------+----+-----------+
+root@patroni-node1:~# systemctl stop patroni
+root@patroni-node1:~# systemctl start patroni
+root@patroni-node1:~# patronictl -c /etc/patroni.yml list
+
++ Cluster: pg-ha-cluster ---+---------+---------+----+-----------+
+| Member   | Host           | Role    | State   | TL | Lag in MB |
++----------+----------------+---------+---------+----+-----------+
+| pg_node1 | 158.160.25.27  | Replica | stopped |    |   unknown |
+| pg_node2 | 158.160.18.188 | Leader  | running |  3 |           |
++----------+----------------+---------+---------+----+-----------+
+
+
+
+
+root@patroni-node1:/etc/default# patronictl -c /etc/patroni.yml list
++ Cluster: pg-ha-cluster +---------+---------+----+-----------+
+| Member   | Host        | Role    | State   | TL | Lag in MB |
++----------+-------------+---------+---------+----+-----------+
+| pg_node1 | 10.129.0.24 | Leader  | running |  8 |           |
+| pg_node2 | 10.129.0.10 | Replica | running |  6 |        32 |
++----------+-------------+---------+---------+----+-----------+
+root@patroni-node1:/etc/default# patronictl -c /etc/patroni.yml list
++ Cluster: pg-ha-cluster +--------------+---------+----+-----------+
+| Member   | Host        | Role         | State   | TL | Lag in MB |
++----------+-------------+--------------+---------+----+-----------+
+| pg_node1 | 10.129.0.24 | Leader       | running |  8 |           |
+| pg_node2 | 10.129.0.10 | Sync Standby | running |  8 |         0 |
++----------+-------------+--------------+---------+----+-----------+
+
