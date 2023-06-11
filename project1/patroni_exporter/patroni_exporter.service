@@ -1,0 +1,12 @@
+[Unit]
+Description=Prometheus Piatroni Exporter
+After=network.target
+
+[Service]
+Type=simple
+Restart=always
+User=postgres
+Group=postgres
+ExecStart=/usr/local/bin/patroni_exporter --patroni.host="http://localhost" --patroni.port=8008
+[Install]
+WantedBy=multi-user.target
