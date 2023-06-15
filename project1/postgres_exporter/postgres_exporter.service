@@ -7,6 +7,7 @@ Restart=always
 User=postgres
 Group=postgres
 Environment=DATA_SOURCE_NAME="postgresql://postgres:postgres@localhost:5432/?sslmode=disable"
+Environment=PG_EXPORTER_EXTEND_QUERY_PATH="/etc/postgres_exporter/queries.yaml"
 ExecStart=/usr/local/bin/postgres_exporter
 [Install]
 WantedBy=multi-user.target
