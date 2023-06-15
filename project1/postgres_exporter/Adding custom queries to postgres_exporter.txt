@@ -1,2 +1,31 @@
-https://subscription.packtpub.com/book/data/9781838648138/9/ch09lvl1sec00/adding-custom-queries-to-postgres_exporter
+bigewg@patroni-node1:~$ sudo  mkdir /etc/postgres_exporter
+bigewg@patroni-node1:~$ sudo chown postgres:postgres /etc/postgres_exporter
+postgres@patroni-node1:~$ vi /etc/postgres_exporter/queries.yaml
 
+pg_replication:
+  query: "select extract(epoch from max(coalesce(replay_lag, make_interval(0,0,0,0,0,0,0.0)))) as lag_seconds from pg_stat_replication"
+  master: true
+  metrics:
+    - lag_seconds:
+        usage: "GAUGE"
+        description: "Replication lag behind primary in seconds, as detected after a roundtrip on the primary"
+
+root@patroni-node1:~# vi /etc/systemd/system/postgres_exporter.service
+[Unit]
+Description=Prometheus PostgreSQL Exporter
+After=network.target
+
+[Service]
+Type=simple
+Restart=always
+User=postgres
+Group=postgres
+Environment=DATA_SOURCE_NAME="postgresql://postgres:postgres@localhost:5432/?sslmode=disable"
+Environment=PG_EXPORTER_EXTEND_QUERY_PATH="/etc/postgres_exporter/queries.yaml"
+ExecStart=/usr/local/bin/postgres_exporter
+[Install]
+WantedBy=multi-user.target
+
+root@dz20:~# systemctl daemon-reload
+root@dz20:~# systemctl restart postgres_exporter.service
+root@dz20:~# systemctl status postgres_exporter.service
